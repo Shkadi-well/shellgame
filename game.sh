@@ -5,15 +5,8 @@ rows=10
 cols=10
 
 # 创建一个二维数组并初始化为空格
-declare -A grid #用于人物移动
-declare -A map #用于场景绘制
 
-# 人物图层初始化
-for ((i=0; i<rows; i++)); do
-  for ((j=0; j<cols; j++)); do
-    grid[$i,$j]="🟨"
-  done
-done
+declare -A map #用于场景绘制
 
 # 场景图层初始化
 for ((i=0; i<rows; i++)); do
@@ -27,8 +20,10 @@ x=0
 y=0
 new_x=0
 new_y=0
+map[$x,$y]="👦"  # 人物的初始位置
 
-grid[$x,$y]="👦"  # 人物的初始位置
+# 保存未被捡起的物品
+save_item="🟨"
 
 # 背包系统
 declare -a backpack
@@ -55,12 +50,11 @@ for ((i=0; i<rows; i++)); do
 done
 
 # 函数：打印数组
-print_grid() {
+print_map() {
   clear
   echo "========= 游戏地图 =========="
   for ((i=0; i<rows; i++)); do
     for ((j=0; j<cols; j++)); do
-      echo -n "${grid[$i,$j]}"  # 打印人物图层
       echo -n "${map[$i,$j]} "  # 打印场景图层
     done
     echo
@@ -71,40 +65,23 @@ print_grid() {
   echo "============================="
 }
 
-# 检查是否在 🌳 或 🌼 旁边
-check_if_you_can_go(){
-  if { [ "${map[$x,$y]}" == "🌳" ] || [ "${map[$x,$y]}" == "🌼" ] && [ $((new_y - y)) -eq 1 ]; } || 
-    { [ "${map[$new_x,$new_y]}" == "🌳" ] || [ "${map[$new_x,$new_y]}" == "🌼" ] && [ $((y - new_y)) -eq 1 ]; }; then
-    ((new_y = y))  # 不移动 y 坐标
-  else
-    x=$new_x  # 更新 x 坐标
-    y=$new_y  # 更新 y 坐标
-  fi
-}
-
-# 函数：检查当前位置是否有物品
 check_item() {
-    if [ "${map[$x,$y]}" == "🍎" ]; then
-        read -p "你遇到了苹果, 是否拾起? (yes/no): " answer
-        if [ "$answer" == "yes" ]; then 
-            pick_item "苹果" # 进行捡起操作
-        fi
-    elif [ "${map[$x,$y]}" == "🪵" ]; then
-        read -p "你遇到了树枝, 是否拾起? (yes/no): " answer
-        if [ "$answer" == "yes" ]; then 
-            pick_item "树枝" # 进行捡起操作
-        fi
-    elif [ "${map[$x,$y]}" == "🍃" ]; then
-        read -p "你遇到了树叶, 是否拾起? (yes/no): " answer
-        if [ "$answer" == "yes" ]; then 
-            pick_item "树叶" # 进行捡起操作
-        fi
-    elif [ "${map[$x,$y]}" == "💎" ]; then
-        read -p "你遇到了钻石, 是否拾起? (yes/no): " answer
-        if [ "$answer" == "yes" ]; then 
-            pick_item "钻石" # 进行捡起操作
-        fi
+  if [[ ${map[$new_x,$new_y]} == "🌳" ]]; then
+    # 如果遇到树，则不移动
+    new_x=$x
+    new_y=$y
+    save_item=${map[$new_x,$new_y]}
+  else 
+    # 移动到新位置
+    x=$new_x
+    y=$new_y
+    if [[ ${map[$new_x,$new_y]} != "🟨" ]]; then 
+      read -p "你遇到了 ${map[$new_x,$new_y]}, 是否拾起? (yes/no): " answer
+      if [[ "$answer" == "yes" ]]; then 
+        pick_item ${map[$new_x,$new_y]} # 进行捡起操作
+      fi
     fi
+  fi
 }
 
 pick_item() {
@@ -113,6 +90,7 @@ pick_item() {
     backpack+=("$item")  # 添加物品到背包
     echo "$item 已加入背包！"
     map[$x,$y]="🟨"  # 清空当前位置的物品
+    save_item="🟨"
   else
     echo "背包已满，无法拾取 $item!"
     read -p "是否丢弃背包中其他物品?(yes/no),并拾取 $item!" answer
@@ -130,88 +108,35 @@ pick_item() {
         local discarded_item="${backpack[$((choice - 1))]}"
         backpack[$((choice - 1))]="$item"  # 替换物品
         map[$x,$y]="🟨"  # 清空当前位置的物品
-
         # 重新放置被丢弃的物品
-        case "$discarded_item" in
-          "树叶")
-            map[$x,$y]="🍃"
-            ;;
-          "树枝")
-            map[$x,$y]="🪵"
-            ;;
-          "苹果")
-            map[$x,$y]="🍎"
-            ;;
-          "钻石")
-            map[$x,$y]="💎"
-            ;;
-          *)
-            echo "丢弃的物品未知！"
-            ;;
-        esac
-
-        echo "$discarded_item 已丢弃,$item 已加入背包!"
-      else
-        echo "选择无效，请选择正确的编号！"
+        map[$x,$y]="$discarded_item"
+        save_item=${map[$x,$y]}
+        echo "$discarded_item 已丢弃,$item 已加入背包!"        
       fi
+    else
+      save_item=$item
     fi
   fi
 }
 
-
-
-# 函数：移动上
-move_up() {
-  if ((x > 0)); then
-    grid[$x,$y]="🟨"  # 清空原位置
-    ((new_x--))
-    check_if_you_can_go
-    grid[$x,$y]="👦"  # 更新新位置
-    print_grid
+# 函数：移动
+move() {
+  local dx="$1"
+  local dy="$2"
+  if ((x + dx >= 0 && x + dx < rows && y + dy >= 0 && y + dy < cols)); then
+    map[$x,$y]=$save_item  # 清空原位置
+    new_x=$((x + dx))
+    new_y=$((y + dy))
+    save_item=${map[$new_x,$new_y]}
     check_item
-  fi
-}
-
-# 函数：移动下
-move_down() {
-  if ((x < rows - 1)); then
-    grid[$x,$y]="🟨"  # 清空原位置
-    ((new_x++))
-    check_if_you_can_go
-    grid[$x,$y]="👦"  # 更新新位置
-    print_grid
-    check_item
-  fi
-}
-
-# 函数：移动左
-move_left() {
-  if ((y > 0)); then
-    grid[$x,$y]="🟨"  # 清空原位置
-    ((new_y--))
-    check_if_you_can_go
-    grid[$x,$y]="👦"  # 更新新位置
-    print_grid
-    check_item
-  fi
-}
-
-# 函数：移动右
-move_right() {
-  if ((y < cols - 1)); then
-    grid[$x,$y]="🟨"  # 清空原位置
-    ((new_y++))
-    check_if_you_can_go
-    grid[$x,$y]="👦"  # 更新新位置
-    print_grid
-    check_item
+    map[$x,$y]="👦"  # 更新新位置
   fi
 }
 
 # ==========================以下为主函数部分==========================
 
 # 初始绘制
-print_grid
+print_map
 
 # 移动元素
 while true; do
@@ -220,13 +145,12 @@ while true; do
   new_x=$x
   new_y=$y
   case $move in
-    w) move_up ;;  # 上
-    a) move_left ;;  # 左
-    s) move_down ;;  # 下
-    d) move_right ;;  # 右
+    w) move -1 0 ;;  # 上
+    a) move 0 -1 ;;  # 左
+    s) move 1 0 ;;  # 下
+    d) move 0 1 ;;  # 右
     q) break ;;  # 退出
     *) echo "无效的输入!" ;;  # 无效输入
   esac
-  
+  print_map
 done
-
