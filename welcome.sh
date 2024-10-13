@@ -35,16 +35,6 @@ save_item="🟨"
 declare -a backpack
 max_capacity=4
 
-# 检查游戏数据文件是否存在
-check_game_data() {
-  if [[ ! -f ./saved_data.txt ]]; then
-    echo -e "${RED}没有找到保存的记录文件！${RESET}"
-    sleep 2
-    return 1  # 返回错误状态
-  fi
-  return 0  # 正常返回
-}
-
 # 读取保存的游戏数据
 load_game_data() {
   check_game_data || return  # 如果数据文件不存在，则返回
@@ -98,9 +88,8 @@ welcome_screen() {
 
   case $choice in
     1)
-      loading_animation  # 加载动画
-      progress_bar  # 打印进度条
-      animation  # 游戏开始动画（在Character_movements.sh中定义）
+ 
+      animation  # 游戏开始动画
       randomPut  # 初始化游戏场景
       first_chapter  # 进入第一章节
       main  # 进入游戏主循环
