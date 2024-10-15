@@ -3,6 +3,7 @@
 source ./character_movement.sh
 source ./cutscence.sh 
 source ./first_chapter.sh 
+source ./music.sh
 
 # 初始化二维数组的尺寸
 rows=10
@@ -35,12 +36,31 @@ save_item="🟨"
 declare -a backpack
 max_capacity=4
 
+init(){
+  # 设置人物起始位置
+  x=0
+  y=0
+  new_x=0
+  new_y=0
+
+  # 设置企鹅初始位置
+  penguin_x=$((rows - 1))
+  penguin_y=$((cols - 1))
+
+  # 场景图层初始化
+  for ((i=0; i<rows; i++)); do
+    for ((j=0; j<cols; j++)); do
+      map[$i,$j]="🟨"
+    done
+  done
+
+  backpack=()  # 清空背包
+}
+
 # 读取保存的游戏数据
 load_game_data() {
-  check_game_data || return  # 如果数据文件不存在，则返回
-
   # 清空背包
-  unset backpack
+  backpack=()
 
   # 读取数据文件并加载变量
   while IFS='=' read -r key value; do
@@ -53,20 +73,27 @@ load_game_data() {
       new_y) new_y=$value ;;
       save_item) save_item=$value ;;
       max_capacity) max_capacity=$value ;;
-      backpack) IFS='(' read -ra backpack <<< "$value" ;;
+      backpack) 
+        IFS=',' read -ra backpack <<< "$value" 
+        ;;
       *)  # 解析地图数据
         IFS=',' read -r i j <<< "$key"
         map[$i,$j]=$value
         ;;
     esac
   done < ./saved_data.txt
+
+  for i in "${backpack[@]}"; do
+    echo $i
+  done
+  read -p ""
 }
+
 
 
 # 打印欢迎界面
 welcome_screen() {
   clear  # 清屏
-  animation  
   # 欢迎标题和框架
   echo -e "╔════════════════════════════════════════════════╗"
   echo -e "                 欢迎来到冒险世界!"
@@ -88,11 +115,15 @@ welcome_screen() {
 
   case $choice in
     1)
+      init
       first_chapter  # 进入第一章节
-      
+      randomPut  # 初始化游戏场景     
       operation  # 进入游戏主循环
       ;;
     2)
+      if pgrep mpg123 > /dev/null; then
+        stop_music "$music_pid"
+      fi
       load_game_data && operation  # 读取数据并进入游戏
       ;;
     3)
@@ -107,5 +138,10 @@ welcome_screen() {
   esac
 }
 # ===================程序执行部分======================
+ # 启动音乐播放
+music_pid=$(play_music "$SCENE1_MUSIC")
+clear  # 清屏
 
+# 启动场景动画
+animation
 welcome_screen  # 启动游戏界面
