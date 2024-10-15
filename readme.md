@@ -19,4 +19,5 @@ chmod +x welcome.sh
 
 游戏音乐介绍：
 BEGIN.mp3 :Ginger Island 作者：ConcernedApe
+
 SCENE.mp3 :Explore 作者：Breakbeat Heartbeat
