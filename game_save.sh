@@ -17,10 +17,11 @@ quit(){
       echo "输入错误, 请输入 y 或 n!"    
     fi 
   done 
-    stop_music "$music_pid1"
-    echo "退出游戏!"
-    welcome_screen
+  stop_music "$music_pid1"
+  echo "退出游戏!"
+  welcome_screen
 }
+
 # 保存文件函数
 save_game_data() {
   # 构建数据字符串
