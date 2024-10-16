@@ -1,6 +1,5 @@
 # the second chapter of the game
 
-
 second_chapter() {
  # 使用 figlet 和 lolcat 渐显游戏标题
     stop_music "$music_pid1"
