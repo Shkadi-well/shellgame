@@ -1,4 +1,5 @@
 # first chapter of the game
+
 source ./music.sh
 
 first_chapter() {
