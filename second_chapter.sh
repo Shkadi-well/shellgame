@@ -9,5 +9,7 @@ second_chapter() {
     figlet -w 150 "Fresh start" | lolcat -d 50  # -d 50 控制彩虹色变化的延迟时间
     echo "由于时间原因，本游戏暂时停止更新，敬请期待下一版！"
     read -p ""
-    exit 0
+
+    # 回到欢迎界面
+    welcome_screen
 }
