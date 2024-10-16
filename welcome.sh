@@ -93,7 +93,15 @@ load_game_data() {
 
 # 打印欢迎界面
 welcome_screen() {
+  # 停止播放当前音乐
+  if pgrep mpg123 > /dev/null; then
+    stop_music "$music_pid"
+  fi
+  
+   # 启动音乐播放
+  music_pid=$(play_music "$SCENE1_MUSIC")
   clear  # 清屏
+  
   # 欢迎标题和框架
   echo -e "╔════════════════════════════════════════════════╗"
   echo -e "                 欢迎来到冒险世界!"
@@ -144,4 +152,6 @@ clear  # 清屏
 
 # 启动场景动画
 animation
-welcome_screen  # 启动游戏界面
+
+# 启动游戏界面
+welcome_screen  
