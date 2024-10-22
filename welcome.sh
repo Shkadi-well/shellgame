@@ -4,10 +4,11 @@ source ./character_movement.sh
 source ./cutscence.sh 
 source ./first_chapter.sh 
 source ./music.sh
+source ./title.sh
 
 # 初始化二维数组的尺寸
 rows=10
-cols=10
+cols=10 
 
 # 创建一个二维数组并初始化为空格
 declare -A map # 用于场景绘制
@@ -82,26 +83,22 @@ load_game_data() {
         ;;
     esac
   done < ./saved_data.txt
-
-  for i in "${backpack[@]}"; do
-    echo $i
-  done
-  read -p ""
 }
 
 
 
 # 打印欢迎界面
 welcome_screen() {
-  # 停止播放当前音乐
+  # 停止当前播放的音乐
   if pgrep mpg123 > /dev/null; then
     stop_music "$music_pid"
   fi
-  
-   # 启动音乐播放
+
   music_pid=$(play_music "$SCENE1_MUSIC")
   clear  # 清屏
-  
+
+  title_show
+
   # 欢迎标题和框架
   echo -e "╔════════════════════════════════════════════════╗"
   echo -e "                 欢迎来到冒险世界!"
@@ -135,6 +132,9 @@ welcome_screen() {
       load_game_data && operation  # 读取数据并进入游戏
       ;;
     3)
+      if pgrep mpg123 > /dev/null; then
+        stop_music "$music_pid"
+      fi
       echo -e "感谢游玩！再见！"
       exit 0
       ;;
@@ -146,7 +146,8 @@ welcome_screen() {
   esac
 }
 # ===================程序执行部分======================
- # 启动音乐播放
+ 
+# 启动音乐播放
 music_pid=$(play_music "$SCENE1_MUSIC")
 clear  # 清屏
 

@@ -5,12 +5,12 @@ quit(){
   echo "是否保存"
   while true; do
     read -p "是否保存?(y/n): " answer
-    if [[ "$answer" == "y" ]]; then
+    if [[ "$answer" == "y" || "$answer" == "Y" ]]; then
       #写入文件
       save_game_data
       echo "保存成功!"
       break
-    elif [[ "$answer" == "n" ]]; then
+    elif [[ "$answer" == "n" || "$answer" == "N" ]]; then
       echo "未保存"
       break
     else
@@ -21,7 +21,6 @@ quit(){
   echo "退出游戏!"
   welcome_screen
 }
-
 # 保存文件函数
 save_game_data() {
   # 构建数据字符串

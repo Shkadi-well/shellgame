@@ -1,5 +1,6 @@
-# 定义背景音乐文件路径
+#!/bin/bash
 
+# 定义背景音乐文件路径
 MUSIC_DIR="./MUSIC"
 SCENE1_MUSIC="$MUSIC_DIR/BEGIN.mp3"
 SCENE2_MUSIC="$MUSIC_DIR/SCENE1.mp3"
